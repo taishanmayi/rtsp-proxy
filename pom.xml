@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project
+	xsi:noNamespaceSchemaLocation="http://maven.apache.org/maven-v4_0_0.xsd">
+
+	<!-- 
+		$Id: pom.xml 337 2005-12-08 21:06:48Z merlimat $
+		$URL: http://svn.berlios.de/svnroot/repos/rtspproxy/tags/3.0-ALPHA2/pom.xml $
+	-->
+
+	<modelVersion>4.0.0</modelVersion>
+
+	<name>RTSP Proxy</name>
+	<groupId>net.merlimat</groupId>
+	<artifactId>rtspproxy</artifactId>
+	<version>3.0-ALPHA2</version>
+	<url>http://rtspproxy.berlios.de</url>
+	<inceptionYear>2003</inceptionYear>
+
+	<organization>
+		<name>Matteo Merli</name>
+		<url>http://merlimat.net</url>
+	</organization>
+
+	<issueManagement>
+		<system>Berlios</system>
+		<url>http://developer.berlios.de/bugs/?group_id=4526</url>
+	</issueManagement>
+
+	<licenses>
+		<license>
+			<name>GNU General Public License</name>
+			<url>LICENSE.txt</url>
+		</license>
+	</licenses>
+	<developers>
+		<developer>
+			<id>merlimat</id>
+			<name>Matteo Merli</name>
+			<email>matteo.merli@gmail.com</email>
+			<!-- <timezone>+1</timezone> -->
+			<url>http://merlimat.net/about</url>
+		</developer>
+	</developers>
+
+	<scm>
+		<connection>
+			scm:svn:http://svn.berlios.de/svnroot/repos/rtspproxy/trunk
+		</connection>
+		<developerConnection>
+			scm:svn:https://svn.berlios.de/svnroot/repos/rtspproxy/trunk
+		</developerConnection>
+		<url>http://svn.berlios.de/wsvn/rtspproxy/</url>
+	</scm>
+
+	<mailingLists>
+		<mailingList>
+			<name>Development list</name>
+			<post>rtspproxy-devel@lists.berlios.de</post>
+
+			<archive>
+				http://www.nabble.com/RtspProxy-Devel-f6753.html
+			</archive>
+			<subscribe>
+				https://lists.berlios.de/mailman/listinfo/rtspproxy-devel
+			</subscribe>
+			<unsubscribe>
+				https://lists.berlios.de/mailman/listinfo/rtspproxy-devel
+			</unsubscribe>
+		</mailingList>
+	</mailingLists>
+
+	<distributionManagement>
+		<downloadUrl>
+			http://rtspproxy.berlios.de/download.html
+		</downloadUrl>
+		<site>
+			<id>rtspproxy.website</id>
+			<name>Default Site</name>
+			<url>
+				scp://shell.berlios.de/home/groups/rtspproxy/htdocs
+			</url>
+		</site>
+	</distributionManagement>
+
+	<dependencies>
+		<dependency>
+			<groupId>log4j</groupId>
+			<artifactId>log4j</artifactId>
+			<version>1.2.9</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.directory.network</groupId>
+			<artifactId>mina</artifactId>
+			<version>0.9.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>3.8.1</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+<!--
+	<repositories>
+		<repository>
+		<id>Apache repository</id>
+		<url>http://svn.apache.org/repository/</url>
+		</repository>
+	</repositories>
+-->
+
+	<build>
+		<defaultGoal>assembly:directory</defaultGoal>
+
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+			</resource>
+		</resources>
+
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>1.5</source>
+					<target>1.5</target>
+					<showWarnings>true</showWarnings>
+				</configuration>
+			</plugin>
+<!-- 
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<configuration>
+					<descriptor>
+						src/resources/release/default.xml
+					</descriptor>
+				</configuration>
+			</plugin> -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-site-plugin</artifactId>
+				<configuration>
+					<outputEncoding>UTF-8</outputEncoding>
+				</configuration>
+				<!--  <version>2.0-beta-2</version> -->
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>changes-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<goals>
+							<goal>announcement-generate</goal>
+						</goals>
+						<id>announcement-generate</id>
+					</execution>
+					<execution>
+						<goals>
+							<goal>announcement-mail</goal>
+						</goals>
+						<id>announcement-mail</id>
+					</execution>
+				</executions>
+				<configuration>
+					<xmlPath>src/changes</xmlPath>
+
+					<smtpHost>mail.yourhost.com</smtpHost>
+					<smtpPort implementation="java.lang.Integer">
+						25
+					</smtpPort>
+					<toAddresses>
+						<toAddress implementation="java.lang.String">
+							someones@email.com
+						</toAddress>
+						<toAddress implementation="java.lang.String">
+							anothersomeone@email.com
+						</toAddress>
+					</toAddresses>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-pmd-plugin</artifactId>
+				<configuration>
+					<targetJdk implementation="java.lang.String">
+						1.5
+					</targetJdk>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+	<reporting>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>
+					maven-project-info-reports-plugin
+				</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>changelog-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>surefire-report-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>changes-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>taglist-maven-plugin</artifactId>
+			</plugin>
+<!-- 
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<configuration>
+					<charset>UTF-8</charset>
+					<docencoding>UTF-8</docencoding>
+					<link>
+						http://java.sun.com/j2se/1.5.0/docs/api/,
+						http://www.junit.org/junit/javadoc/3.8.1/,
+						http://directory.apache.org/subprojects/network/apidocs/
+					</link>
+				</configuration>
+			</plugin>
+-->
+			<!-- 
+				<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-pmd-plugin</artifactId>
+				<configuration>
+				<targetJdk implementation="java.lang.String">1.5</targetJdk>
+				</configuration>
+				</plugin>
+			-->
+		</plugins>
+	</reporting>
+
+</project>
