@@ -19,8 +19,6 @@
 package rtspproxy;
 
 import org.apache.log4j.Logger;
-import org.apache.mina.registry.ServiceRegistry;
-import org.apache.mina.registry.SimpleServiceRegistry;
 
 /**
  * 
@@ -29,8 +27,6 @@ public class Reactor
 {
 
 	private static Logger log = Logger.getLogger( Reactor.class );
-
-	private static ServiceRegistry registry = new SimpleServiceRegistry();
 
 	private static ProxyService rtspService;
 	private static ProxyService rtpClientService;
@@ -77,10 +73,4 @@ public class Reactor
 		if ( isStandalone )
 			Runtime.getRuntime().halt( 0 );
 	}
-
-	protected static synchronized ServiceRegistry getRegistry()
-	{
-		return registry;
-	}
-
 }

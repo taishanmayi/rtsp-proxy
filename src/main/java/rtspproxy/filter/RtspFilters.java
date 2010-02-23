@@ -15,7 +15,6 @@
  * $URL: http://svn.berlios.de/svnroot/repos/rtspproxy/tags/3.0-ALPHA2/src/main/java/rtspproxy/filter/RtspFilters.java $
  * 
  */
-
 package rtspproxy.filter;
 
 import org.apache.mina.common.IoFilter;
@@ -39,89 +38,26 @@ import rtspproxy.rtsp.RtspEncoder;
  * 
  * @author Matteo Merli
  */
-public abstract class RtspFilters implements IoFilterChainBuilder
-{
+public class RtspFilters {
 
-	private static ProtocolCodecFactory codecFactory = new ProtocolCodecFactory()
-	{
+    private static ProtocolCodecFactory codecFactory = new ProtocolCodecFactory() {
 
-		// Decoders can be shared
-		private ProtocolEncoder rtspEncoder = new RtspEncoder();
-		private ProtocolDecoder rtspDecoder = new RtspDecoder();
+        // Decoders can be shared
+        private ProtocolEncoder rtspEncoder = new RtspEncoder();
+        private ProtocolDecoder rtspDecoder = new RtspDecoder();
 
-		public ProtocolEncoder getEncoder()
-		{
-			return rtspEncoder;
-		}
+        public ProtocolEncoder getEncoder() {
+            return rtspEncoder;
+        }
 
-		public ProtocolDecoder getDecoder()
-		{
-			return rtspDecoder;
-		}
-	};
+        public ProtocolDecoder getDecoder() {
+            return rtspDecoder;
+        }
+    };
+    private static IoFilter codecFilter = new ProtocolCodecFilter(codecFactory);
 
-	private static IoFilter codecFilter = new ProtocolCodecFilter( codecFactory );
-
-	// These filters are instanciated only one time, when requested
-	private static IpAddressFilter ipAddressFilter = null;
-	private static AuthenticationFilter authenticationFilter = null;
-
-	/**
-	 * IP Address filter.
-	 * <p>
-	 * This needs to be the first filter in the chain to block blacklisted host
-	 * in the early stage of the connection, preventing network and computation
-	 * load from unwanted hosts.
-	 */
-	protected void addIpAddressFilter( IoFilterChain chain )
-	{
-		boolean enableIpAddressFilter = Config.getBoolean(
-				"proxy.filter.ipaddress.enable", false );
-
-		if ( enableIpAddressFilter ) {
-			if ( ipAddressFilter == null )
-				ipAddressFilter = new IpAddressFilter();
-			chain.addLast( "ipAddressFilter", ipAddressFilter );
-		}
-	}
-
-	/**
-	 * The RTSP codec filter is always present. Translates the incoming streams
-	 * into RTSP messages.
-	 */
-	protected void addRtspCodecFilter( IoFilterChain chain )
-	{
-		chain.addLast( "codec", codecFilter );
-	}
-
-	/**
-	 * Authentication filter.
-	 */
-	protected void addAuthenticationFilter( IoFilterChain chain )
-	{
-		boolean enableAuthenticationFilter = Config.getBoolean(
-				"proxy.filter.authentication.enable", false );
-
-		if ( enableAuthenticationFilter ) {
-			if ( authenticationFilter == null )
-				authenticationFilter = new AuthenticationFilter();
-			chain.addLast( "authentication", authenticationFilter );
-		}
-	}
-
-	protected void addRewriteFilter( IoFilterChain chain )
-	{
-		// TODO: move this to RtspFilters
-		String rewritingFilter = Config.get(
-				"filter.requestUrlRewriting.implementationClass", null );
-
-		try {
-			if ( rewritingFilter != null )
-				chain.addLast( "requestUrlRewriting", new RequestUrlRewritingImpl(
-						rewritingFilter ) );
-		} catch ( Exception e ) {
-			// already logged
-			Reactor.stop();
-		}
-	}
+    // TODO this is damn ugly
+    public static IoFilter getCodecFilter() {
+        return codecFilter;
+    }
 }
