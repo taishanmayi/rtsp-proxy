@@ -15,7 +15,6 @@
  * $URL: http://svn.berlios.de/svnroot/repos/rtspproxy/tags/3.0-ALPHA2/src/main/java/rtspproxy/RtpClientService.java $
  * 
  */
-
 package rtspproxy;
 
 import java.io.IOException;
@@ -24,9 +23,9 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 
 import org.apache.log4j.Logger;
+import org.apache.mina.common.IoAcceptor;
 import org.apache.mina.common.IoSession;
-import org.apache.mina.common.TransportType;
-import org.apache.mina.registry.Service;
+import org.apache.mina.transport.socket.nio.DatagramAcceptor;
 
 import rtspproxy.lib.NoPortAvailableException;
 import rtspproxy.lib.PortManager;
@@ -39,107 +38,102 @@ import rtspproxy.proxy.ClientRtpPacketHandler;
  * 
  * @author Matteo Merli
  */
-public class RtpClientService implements ProxyService
-{
+public class RtpClientService implements ProxyService {
 
-	private static Logger log = Logger.getLogger( RtpClientService.class );
+    private static Logger log = Logger.getLogger(RtpClientService.class);
+    // TODO: why are these static?!
+    static InetSocketAddress rtpAddress = null;
+    static InetSocketAddress rtcpAddress = null;
 
-	static InetSocketAddress rtpAddress = null;
-	static InetSocketAddress rtcpAddress = null;
+    // TODO remove static
+    private static IoAcceptor acceptor = new DatagramAcceptor();
 
-	public void start() throws IOException, NoPortAvailableException
-	{
-		int rtpPort = Config.getInt( "proxy.client.rtp.port", 8002 );
-		int rtcpPort = Config.getInt( "proxy.client.rtcp.port", 8003 );
-		String netInterface = Config.get( "proxy.client.interface", null );
-		boolean dinPorts = Config.getBoolean( "proxy.client.dynamicPorts", false );
+    public void start() throws IOException, NoPortAvailableException {
+        int rtpPort = Config.getInt("proxy.client.rtp.port", 8002);
+        int rtcpPort = Config.getInt("proxy.client.rtcp.port", 8003);
+        String netInterface = Config.get("proxy.client.interface", null);
+        boolean dinPorts = Config.getBoolean("proxy.client.dynamicPorts", false);
 
-		// If dinPorts is true, we have to first check the availability
-		// of the ports and choose 2 valid ports.
-		if ( dinPorts ) {
-			int[] ports = PortManager.findAvailablePorts( 2, rtpPort );
-			rtpPort = ports[0];
-			rtcpPort = ports[1];
-		}
+        // If dinPorts is true, we have to first check the availability
+        // of the ports and choose 2 valid ports.
+        if (dinPorts) {
+            int[] ports = PortManager.findAvailablePorts(2, rtpPort);
+            rtpPort = ports[0];
+            rtcpPort = ports[1];
+        }
 
-		// Update properties with effective ports
-		Config.setInt( "proxy.client.rtp.port", rtpPort );
-		Config.setInt( "proxy.client.rtcp.port", rtcpPort );
+        // Update properties with effective ports
+        Config.setInt("proxy.client.rtp.port", rtpPort);
+        Config.setInt("proxy.client.rtcp.port", rtcpPort);
 
-		rtpAddress = new InetSocketAddress( InetAddress.getByName( netInterface ),
-				rtpPort );
-		rtcpAddress = new InetSocketAddress( InetAddress.getByName( netInterface ),
-				rtcpPort );
+        rtpAddress = new InetSocketAddress(InetAddress.getByName(netInterface), rtpPort);
+        rtcpAddress = new InetSocketAddress(InetAddress.getByName(netInterface), rtcpPort);
 
-		try {
-			Service rtpService, rtcpService;
+        try {
+            acceptor.bind(rtpAddress, new ClientRtpPacketHandler());
+            acceptor.bind(rtcpAddress, new ClientRtcpPacketHandler());
+            /**Service rtpService, rtcpService;
 
-			rtpService = new Service( "RtpClientService", TransportType.DATAGRAM,
-					rtpAddress );
-			rtcpService = new Service( "RtcpClientService", TransportType.DATAGRAM,
-					rtcpAddress );
+            rtpService = new Service("RtpClientService", TransportType.DATAGRAM,
+                    rtpAddress);
+            rtcpService = new Service("RtcpClientService", TransportType.DATAGRAM,
+                    rtcpAddress);
 
-			Reactor.getRegistry().bind( rtpService, new ClientRtpPacketHandler() );
-			Reactor.getRegistry().bind( rtcpService, new ClientRtcpPacketHandler() );
-			log.info( "RtpClientService Started - Listening on: "
-					+ InetAddress.getByName( netInterface ) + " " + rtpPort + "-"
-					+ rtcpPort );
+            Reactor.getRegistry().bind(rtpService, new ClientRtpPacketHandler());
+            Reactor.getRegistry().bind(rtcpService, new ClientRtcpPacketHandler());*/
+            log.info("RtpClientService Started - Listening on: "
+                    + InetAddress.getByName(netInterface) + " " + rtpPort + "-"
+                    + rtcpPort);
 
-		} catch ( IOException e ) {
-			log.fatal( "Can't start RtpClientService. " + e );
-			throw e;
-		}
-	}
+        } catch (IOException e) {
+            log.fatal("Can't start RtpClientService. " + e);
+            throw e;
+        }
+    }
 
-	public void stop()
-	{
-		for ( Object service : Reactor.getRegistry().getServices( "RtpClientService" ) ) {
-			Reactor.getRegistry().unbind( (Service) service );
-		}
-		for ( Object service : Reactor.getRegistry().getServices( "RtcpClientService" ) ) {
-			Reactor.getRegistry().unbind( (Service) service );
-		}
+    public void stop() {
+        acceptor.unbindAll();;
+/*        for (Object service : Reactor.getRegistry().getServices("RtpClientService")) {
+            Reactor.getRegistry().unbind((Service) service);
+        }
+        for (Object service : Reactor.getRegistry().getServices("RtcpClientService")) {
+            Reactor.getRegistry().unbind((Service) service);
+        }
+*/
+        log.info("RtpClientService Stopped");
+    }
 
-		log.info( "RtpClientService Stopped" );
-	}
+    public static IoSession newRtpSession(SocketAddress remoteAddress) {
+        return acceptor.newSession(remoteAddress, rtpAddress);
 
-	public static IoSession newRtpSession( SocketAddress remoteAddress )
-	{
-		return Reactor.getRegistry().getAcceptor( TransportType.DATAGRAM ).newSession(
-				remoteAddress, rtpAddress );
-	}
+        //return Reactor.getRegistry().getAcceptor(TransportType.DATAGRAM).newSession(               remoteAddress, rtpAddress);
+    }
 
-	public static IoSession newRtcpSession( SocketAddress remoteAddress )
-	{
-		return Reactor.getRegistry().getAcceptor( TransportType.DATAGRAM ).newSession(
-				remoteAddress, rtcpAddress );
-	}
+    public static IoSession newRtcpSession(SocketAddress remoteAddress) {
+        return acceptor.newSession(remoteAddress, rtcpAddress);
+        //return Reactor.getRegistry().getAcceptor(TransportType.DATAGRAM).newSession(remoteAddress, rtcpAddress);
+    }
 
-	public static InetSocketAddress getRtpAddress()
-	{
-		return rtpAddress;
-	}
+    public static InetSocketAddress getRtpAddress() {
+        return rtpAddress;
+    }
 
-	public static InetSocketAddress getRtcpAddress()
-	{
-		return rtcpAddress;
-	}
+    public static InetSocketAddress getRtcpAddress() {
+        return rtcpAddress;
+    }
 
-	public static InetAddress getHostAddress()
-	{
-		/*
-		 * The InetAddress (IP) is the same for both RTP and RTCP.
-		 */
-		return rtpAddress.getAddress();
-	}
+    public static InetAddress getHostAddress() {
+        /*
+         * The InetAddress (IP) is the same for both RTP and RTCP.
+         */
+        return rtpAddress.getAddress();
+    }
 
-	public static int getRtpPort()
-	{
-		return rtpAddress.getPort();
-	}
+    public static int getRtpPort() {
+        return rtpAddress.getPort();
+    }
 
-	public static int getRtcpPort()
-	{
-		return rtcpAddress.getPort();
-	}
+    public static int getRtcpPort() {
+        return rtcpAddress.getPort();
+    }
 }

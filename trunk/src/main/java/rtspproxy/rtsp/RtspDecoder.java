@@ -36,6 +36,10 @@ import rtspproxy.lib.Exceptions;
 public class RtspDecoder implements ProtocolDecoder
 {
 
+    public void finishDecode(IoSession session, ProtocolDecoderOutput out) throws Exception {
+        // do nothing
+    }
+
 	/**
 	 * State enumerator that indicates the reached state in the RTSP message
 	 * decoding process.

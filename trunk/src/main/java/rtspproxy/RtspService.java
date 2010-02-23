@@ -21,12 +21,14 @@ package rtspproxy;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 
 import org.apache.log4j.Logger;
-import org.apache.mina.common.TransportType;
-import org.apache.mina.registry.Service;
+import org.apache.mina.common.IoAcceptor;
+import org.apache.mina.transport.socket.nio.SocketAcceptor;
+import org.apache.mina.transport.socket.nio.SocketAcceptorConfig;
+import rtspproxy.filter.RtspSocketAcceptorConfig;
 
-import rtspproxy.filter.RtspClientFilters;
 import rtspproxy.proxy.ClientSide;
 import rtspproxy.rtsp.Handler;
 
@@ -38,6 +40,8 @@ public class RtspService implements ProxyService
 
 	private static Logger log = Logger.getLogger( RtspService.class );
 
+        IoAcceptor acceptor = new SocketAcceptor();
+
 	public void start() throws IOException
 	{
 		// get port and network interface from config file
@@ -47,6 +51,17 @@ public class RtspService implements ProxyService
 		for ( int port : ports ) {
 			try {
 
+                            SocketAddress sa;
+                            if (netInterface == null) // is this test needed?
+                                sa = new InetSocketAddress(port);
+                            else
+                                sa = new InetSocketAddress(netInterface, port);
+
+                            // check if we need per - bind config - it is the same
+                            SocketAcceptorConfig cfg = new RtspSocketAcceptorConfig();
+
+                            acceptor.bind(sa, new ClientSide(), cfg);
+/*
 				Service service;
 				if ( netInterface == null )
 					service = new Service( "RtspService", TransportType.SOCKET, port );
@@ -55,7 +70,7 @@ public class RtspService implements ProxyService
 							new InetSocketAddress( netInterface, port ) );
 
 				Reactor.getRegistry().bind( service, new ClientSide(), new RtspClientFilters() );
-
+*/
 				log.info( "RtspService Started - Listening on: "
 						+ InetAddress.getByName( netInterface ) + ":" + port );
 
@@ -68,10 +83,11 @@ public class RtspService implements ProxyService
 
 	public void stop() throws Exception
 	{
-		for ( Object service : Reactor.getRegistry().getServices( "RtspService" ) ) {
+		acceptor.unbindAll();
+/*		for ( Object service : Reactor.getRegistry().getServices( "RtspService" ) ) {
 			Reactor.getRegistry().unbind( (Service) service );
 		}
-
+*/
 		log.info( "RtspService Stopped" );
 	}
 }
